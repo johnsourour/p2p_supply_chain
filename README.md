@@ -14,11 +14,29 @@ Clone the project,
 $ git clone https://github.com/satwikkansal/python_blockchain_app.git
 ```
 
+(Optional) Configure virtualenv,
+
+```sh
+$ pip install --user pipenv
+```
+
+```sh
+$ make
+deps                           Install dependencies into with the pipenv
+runiface                       Run web-server interface
+```
+
 Install the dependencies,
 
 ```sh
 $ cd python_blockchain_app
 $ pip install -r requirements.txt
+```
+
+or makefile,
+
+```sh
+$ make deps
 ```
 
 Start a blockchain node server,
@@ -29,13 +47,24 @@ $ export FLASK_APP=node_server.py
 $ flask run --port 8000
 ```
 
-One instance of our blockchain node is now up and running at port 8000.
+or makefile,
 
+```sh
+$ make runiface
+```
+
+One instance of our blockchain node is now up and running at port 8000.
 
 Run the application on a different terminal session,
 
 ```sh
 $ python run_app.py
+```
+
+or makefile,
+
+```sh
+$ make runbc
 ```
 
 The application should be up and running at [http://localhost:5000](http://localhost:5000).
@@ -54,7 +83,7 @@ Here are a few screenshots
 
 ![image.png](https://github.com/satwikkansal/python_blockchain_app/raw/master/screenshots/3.png)
 
-To play around by spinning off multiple custom nodes, use the `register_with/` endpoint to register a new node. 
+To play around by spinning off multiple custom nodes, use the `register_with/` endpoint to register a new node.
 
 Here's a sample scenario that you might wanna try,
 

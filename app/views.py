@@ -12,7 +12,6 @@ CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8000"
 
 posts = []
 
-
 def fetch_posts():
     """
     Function to fetch the chain from a blockchain node, parse the
