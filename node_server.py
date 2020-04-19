@@ -185,8 +185,10 @@ def consensus():
 
     for node in peers:
         response = requests.get('{}chain'.format(node))
-        length = response.json()['length']
-        chain = response.json()['chain']
+        data = response.json()
+        response = data['response']
+        length = response['length']
+        chain = response['chain']
         if length > current_len and blockchain.check_chain_validity(chain):
             current_len = length
             longest_chain = chain
@@ -214,6 +216,6 @@ def announce_new_block(block):
 
 # Register service before start server
 for node_address in APPLICATION_SERVICES_ANNONCE:
-    peers.add(node_address) if node_address else None
+    peers.add(node_address.rstrip('/')+'/') if node_address else None
 
 app.run(debug=True, port=APPLICATION_PORT)
