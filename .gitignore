@@ -1,3 +1,5 @@
 *.pyc
 **/*.pyc
 Pipfile.lock
+.idea/*.xml
+.idea/*.iml
