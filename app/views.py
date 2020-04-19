@@ -1,14 +1,16 @@
+from flask import render_template, redirect, request
 import datetime
 import json
-
 import requests
-from flask import render_template, redirect, request
 
-from app import app
+from .application import app
+from .blockchain_api import blockchain
+from .configs import APPLICATION_PORT
+from . import configs as config
 
 # The node with which our application interacts, there can be multiple
 # such nodes as well.
-CONNECTED_NODE_ADDRESS = "http://127.0.0.1:8000"
+CONNECTED_NODE_ADDRESS = "http://127.0.0.1:{}".format(APPLICATION_PORT)
 
 posts = []
 
@@ -21,7 +23,8 @@ def fetch_posts():
     response = requests.get(get_chain_address)
     if response.status_code == 200:
         content = []
-        chain = json.loads(response.content)
+        data = response.json()
+        chain = data['response']
         for block in chain["chain"]:
             for tx in block["transactions"]:
                 tx["index"] = block["index"]
@@ -36,10 +39,14 @@ def fetch_posts():
 @app.route('/')
 def index():
     fetch_posts()
+    wallet = blockchain.account_block
+    wallet_hash = blockchain.get_account_wallet_hash()
+    print(posts)
     return render_template('index.html',
-                           title='YourNet: Decentralized '
-                                 'content sharing',
-                           posts=posts,
+                           title=config.SERVICE_TITLE,
+                           posts=[post for post in posts if wallet_hash in [post['from_account'], post['to_account']]],
+                           wallet=wallet,
+                           blockchain=blockchain,
                            node_address=CONNECTED_NODE_ADDRESS,
                            readable_time=timestamp_to_string)
 
@@ -51,10 +58,15 @@ def submit_textarea():
     """
     post_content = request.form["content"]
     author = request.form["author"]
+    amount = request.form["amount"]
+    target = request.form["target"]
 
     post_object = {
-        'author': author,
+        'author':  author,
         'content': post_content,
+        'amount':  amount,
+        'from_account': blockchain.get_account_wallet_hash(),
+        'to_account': target,
     }
 
     # Submit a transaction

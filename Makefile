@@ -4,17 +4,13 @@ PORT ?= 8000
 deps: ## Install dependencies with the pipenv
 	pipenv install -r requirements.txt
 
-.PHONY: runiface
-runiface: ## Run web-server interface
-	pipenv run flask run --port $(PORT)
-
-.PHONY: runbc
-runbc: ## Run blockchain service
+.PHONY: run
+run: ## Run blockchain service
 ifneq ($(PORT),8000)
 	APPLICATION_SERVICES_ANNONCE="http://localhost:8000" \
-	APPLICATION_PORT=$(PORT) pipenv run python node_server.py
+	APPLICATION_PORT=$(PORT) pipenv run python ./run.py
 else
-	APPLICATION_PORT=$(PORT) pipenv run python node_server.py
+	APPLICATION_PORT=$(PORT) pipenv run python ./run.py
 endif
 
 .PHONY: help
