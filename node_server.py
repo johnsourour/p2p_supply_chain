@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify, make_response
 import requests
 import json
 import time
@@ -18,6 +18,10 @@ blockchain.create_genesis_block()
 # the address to other participating members of the network
 peers = set()
 
+def json_text_response(text, status=200):
+    if status != 200:
+        return make_response(jsonify({"response": text}), status)
+    return jsonify({"response": text})
 
 def register_service(server_hostname):
     anonce_address = "{}/register_with".format(server_hostname)
@@ -36,13 +40,13 @@ def new_transaction():
 
     for field in required_fields:
         if not tx_data.get(field):
-            return "Invalid transaction data", 404
+            return json_text_response("Invalid transaction data", 404)
 
     tx_data["timestamp"] = time.time()
 
     blockchain.add_new_transaction(tx_data)
 
-    return "Success", 201
+    return json_text_response("Success", 201)
 
 
 # endpoint to return the node's copy of the chain.
@@ -53,7 +57,7 @@ def get_chain():
     chain_data = []
     for block in blockchain.chain:
         chain_data.append(block.__dict__)
-    return json.dumps({"length": len(chain_data),
+    return json_text_response({"length": len(chain_data),
                        "chain": chain_data,
                        "peers": list(peers)})
 
@@ -65,7 +69,7 @@ def get_chain():
 def mine_unconfirmed_transactions():
     result = blockchain.mine()
     if not result:
-        return "No transactions to mine"
+        return json_text_response("No transactions to mine")
     else:
         # Making sure we have the longest chain before announcing to the network
         chain_length = len(blockchain.chain)
@@ -73,7 +77,9 @@ def mine_unconfirmed_transactions():
         if chain_length == len(blockchain.chain):
             # announce the recently mined block to the network
             announce_new_block(blockchain.last_block)
-        return "Block #{} is mined.".format(blockchain.last_block.index)
+        return json_text_response(
+            "Block #{} is mined.".format(blockchain.last_block.index),
+        )
 
 
 # endpoint to add new peers to the network.
@@ -81,7 +87,7 @@ def mine_unconfirmed_transactions():
 def register_new_peers():
     node_address = request.get_json()["node_address"]
     if not node_address:
-        return "Invalid data", 400
+        return json_text_response("Invalid data", 400)
 
     # Add the node to the peer list
     peers.add(node_address)
@@ -100,7 +106,7 @@ def register_with_existing_node():
     """
     node_address = request.get_json()["node_address"]
     if not node_address:
-        return "Invalid data", 400
+        return json_text_response("Invalid data", 400)
 
     data = {"node_address": request.host_url}
     headers = {'Content-Type': "application/json"}
@@ -116,7 +122,7 @@ def register_with_existing_node():
         chain_dump = response.json()['chain']
         blockchain = create_chain_from_dump(chain_dump)
         peers.update(response.json()['peers'])
-        return "Registration successful", 200
+        return json_text_response("Registration successful", 200)
     else:
         # if something goes wrong, pass it on to the API response
         return response.content, response.status_code
@@ -156,9 +162,9 @@ def verify_and_add_block():
     added = blockchain.add_block(block, proof)
 
     if not added:
-        return "The block was discarded by the node", 400
+        return json_text_response("The block was discarded by the node", 400)
 
-    return "Block added to the chain", 201
+    return json_text_response("Block added to the chain", 201)
 
 
 # endpoint to query unconfirmed transactions
