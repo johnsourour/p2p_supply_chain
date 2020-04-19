@@ -214,6 +214,6 @@ def announce_new_block(block):
 
 # Register service before start server
 for node_address in APPLICATION_SERVICES_ANNONCE:
-    peers.add(node_address) if node_address else None
+    peers.add(node_address.rstrip('/')+'/') if node_address else None
 
 app.run(debug=True, port=APPLICATION_PORT)
