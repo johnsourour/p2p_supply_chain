@@ -1,0 +1,45 @@
+### address of buyer and seller
+buyer: public(address)
+seller: public(address)
+
+### price of product
+value: public(uint256(wei))
+
+### set to True after transaction is complete
+sold: public(bool)
+
+### check for verification of product authenticity. Set to True after
+verify: public(bool)
+
+### init function to initialize class variables 
+@public
+def __init__(_value: uint256(wei)):
+	### msg is a contract variable 
+	self.value = _value
+	self.seller = msg.sender
+	self.sold = False
+	self.verify = False
+	
+@public
+def cancel():
+	assert self.sold == False  ### contract should only be cancellable as long as product hasn't been sold
+	assert msg.sender == self.seller ### cancellation possible only if sender exists
+	selfdestruct(self.seller)
+	
+@public
+@payable
+def purchase():
+	assert self.sold == False ### to ensure contract is still open
+	assert msg.value == self.value ### price paid is price asked for
+	self.buyer = msg.sender
+	self.sold = True ### product has been sold
+	
+@public
+def verification():
+	assert self.sold == True ### item should have been purchased for this function to be called
+	assert msg.sender == self.buyer ### the intermediate variable for the buyer and seller should match to ensure that both parties are the correct ones
+	assert self.verify == False ### can't verify the same product 2 times
+	
+	self.verify = True
+	assert self.verify == True, 'Product has been verified. Congratulations on your sale!'
+	selfdestruct(self.seller)
