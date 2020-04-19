@@ -25,6 +25,12 @@ class Blockchain:
     def __init__(self):
         self.unconfirmed_transactions = []
         self.chain = []
+        self.account_block = None
+
+    def get_account_wallet_hash(self):
+        if self.account_block is None:
+            return None
+        return self.account_block.hash
 
     def create_genesis_block(self):
         """
@@ -118,6 +124,7 @@ class Blockchain:
 
         last_block = self.last_block
 
+        # No fee for block generation
         new_block = Block(index=last_block.index + 1,
                           transactions=self.unconfirmed_transactions,
                           timestamp=time.time(),
@@ -129,3 +136,21 @@ class Blockchain:
         self.unconfirmed_transactions = []
 
         return True
+
+    def init_account(self):
+        """
+        Init new user account (wallet) and register it in the blockchain
+        """
+        last_block = self.last_block
+
+        # No fee for block generation
+        new_block = Block(index=last_block.index + 1,
+                          transactions=[],
+                          timestamp=time.time(),
+                          previous_hash=last_block.hash)
+
+        proof = self.proof_of_work(new_block)
+        if self.add_block(new_block, proof):
+            self.account_block = new_block
+            return True
+        return False

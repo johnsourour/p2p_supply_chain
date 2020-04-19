@@ -4,24 +4,86 @@ import json
 import time
 import os
 
-from blockchain import Blockchain, Block
-
-APPLICATION_PORT=os.environ.get('APPLICATION_PORT', '8000')
-APPLICATION_SERVICES_ANNONCE=os.environ.get('APPLICATION_SERVICES_ANNONCE', '').split(',')
-
-app = Flask(__name__)
+from .blockchain import Blockchain, Block
+from .configs import APPLICATION_PORT, APPLICATION_SERVICES_ANNONCE
+from .application import app
 
 # the node's copy of blockchain
 blockchain = Blockchain()
 blockchain.create_genesis_block()
+blockchain.init_account()
 
 # the address to other participating members of the network
 peers = set()
+
 
 def json_text_response(text, status=200):
     if status != 200:
         return make_response(jsonify({"response": text}), status)
     return jsonify({"response": text})
+
+
+def commit_blockchain_changes(blockchain):
+    """
+    After adding of the new block we have to share
+    the information with the all nodes in the network
+    """
+    # Making sure we have the longest chain before announcing to the network
+    chain_length = len(blockchain.chain)
+    consensus(blockchain)
+    if chain_length == len(blockchain.chain):
+        # announce the recently mined block to the network
+        announce_new_block(blockchain.last_block)
+
+
+def create_chain_from_dump(chain_dump):
+    print("debug: create_chain_from_dump")
+    generated_blockchain = Blockchain()
+    generated_blockchain.create_genesis_block()
+    for idx, block_data in enumerate(chain_dump):
+        if idx == 0:
+            continue  # skip genesis block
+        block = Block(block_data["index"],
+                      block_data["transactions"],
+                      block_data["timestamp"],
+                      block_data["previous_hash"],
+                      block_data["nonce"])
+        proof = block_data['hash']
+        added = generated_blockchain.add_block(block, proof)
+        if not added:
+            raise Exception("The chain dump is tampered!!")
+    generated_blockchain.init_account()
+    if not commit_blockchain_changes(generated_blockchain):
+        print("Invalid account generated")
+    return generated_blockchain
+
+
+def register_new_nodes(node_address):
+    # request.host_url}
+    node_address = node_address.rstrip('/')
+    current_host = 'http://localhost:' + APPLICATION_PORT
+    data = {"node_address": current_host}
+    headers = {'Content-Type': "application/json"}
+
+    # Make a request to register with remote node and obtain information
+    response = requests.post(node_address + "/register_node",
+                             data=json.dumps(data), headers=headers)
+
+    if response.status_code == 200:
+        global blockchain
+        global peers
+        # update chain and the peers
+        data = response.json()['response']
+        chain_dump = data['chain']
+        peers.add(node_address)
+        peers.update(data['peers'])
+        peers.remove(current_host)
+        blockchain = create_chain_from_dump(chain_dump)
+        return ("Registration successful", 200)
+    else:
+        # if something goes wrong, pass it on to the API response
+        return (response.content, response.status_code)
+
 
 def register_service(server_hostname):
     anonce_address = "{}/register_with".format(server_hostname)
@@ -31,12 +93,13 @@ def register_service(server_hostname):
                   headers={'Content-type': 'application/json'})
     return response
 
+
 # endpoint to submit a new transaction. This will be used by
 # our application to add new data (posts) to the blockchain
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
     tx_data = request.get_json()
-    required_fields = ["author", "content"]
+    required_fields = ["author", "content", "from_account", "to_account"]
 
     for field in required_fields:
         if not tx_data.get(field):
@@ -71,12 +134,7 @@ def mine_unconfirmed_transactions():
     if not result:
         return json_text_response("No transactions to mine")
     else:
-        # Making sure we have the longest chain before announcing to the network
-        chain_length = len(blockchain.chain)
-        consensus()
-        if chain_length == len(blockchain.chain):
-            # announce the recently mined block to the network
-            announce_new_block(blockchain.last_block)
+        commit_blockchain_changes(blockchain)
         return json_text_response(
             "Block #{} is mined.".format(blockchain.last_block.index),
         )
@@ -107,43 +165,8 @@ def register_with_existing_node():
     node_address = request.get_json()["node_address"]
     if not node_address:
         return json_text_response("Invalid data", 400)
-
-    data = {"node_address": request.host_url}
-    headers = {'Content-Type': "application/json"}
-
-    # Make a request to register with remote node and obtain information
-    response = requests.post(node_address + "/register_node",
-                             data=json.dumps(data), headers=headers)
-
-    if response.status_code == 200:
-        global blockchain
-        global peers
-        # update chain and the peers
-        chain_dump = response.json()['chain']
-        blockchain = create_chain_from_dump(chain_dump)
-        peers.update(response.json()['peers'])
-        return json_text_response("Registration successful", 200)
-    else:
-        # if something goes wrong, pass it on to the API response
-        return response.content, response.status_code
-
-
-def create_chain_from_dump(chain_dump):
-    generated_blockchain = Blockchain()
-    generated_blockchain.create_genesis_block()
-    for idx, block_data in enumerate(chain_dump):
-        if idx == 0:
-            continue  # skip genesis block
-        block = Block(block_data["index"],
-                      block_data["transactions"],
-                      block_data["timestamp"],
-                      block_data["previous_hash"],
-                      block_data["nonce"])
-        proof = block_data['hash']
-        added = generated_blockchain.add_block(block, proof)
-        if not added:
-            raise Exception("The chain dump is tampered!!")
-    return generated_blockchain
+    
+    return json_text_response(*register_new_nodes(node_address))
 
 
 # endpoint to add a block mined by someone else to
@@ -173,18 +196,18 @@ def get_pending_tx():
     return json.dumps(blockchain.unconfirmed_transactions)
 
 
-def consensus():
+def consensus(blockchain):
     """
     Our naive consnsus algorithm. If a longer valid chain is
     found, our chain is replaced with it.
     """
-    global blockchain
+    global peers
 
     longest_chain = None
     current_len = len(blockchain.chain)
 
     for node in peers:
-        response = requests.get('{}chain'.format(node))
+        response = requests.get('{}/chain'.format(node))
         data = response.json()
         response = data['response']
         length = response['length']
@@ -207,15 +230,15 @@ def announce_new_block(block):
     respective chains.
     """
     for peer in peers:
-        url = "{}add_block".format(peer)
+        url = "{}/add_block".format(peer)
         headers = {'Content-Type': "application/json"}
-        requests.post(url,
+        response = requests.post(url,
                       data=json.dumps(block.__dict__, sort_keys=True),
                       headers=headers)
+        print(url, response)
 
 
 # Register service before start server
 for node_address in APPLICATION_SERVICES_ANNONCE:
-    peers.add(node_address.rstrip('/')+'/') if node_address else None
-
-app.run(debug=True, port=APPLICATION_PORT)
+    register_new_nodes(node_address.rstrip('/')+'/') if node_address else None
+    # peers.add(node_address.rstrip('/')+'/') if node_address else None
