@@ -2,10 +2,12 @@ from hashlib import sha256
 import json
 import time
 
+from .transaction import TransactionList
+
 class Block:
     def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
         self.index = index
-        self.transactions = transactions
+        self.transactions = transactions or []
         self.timestamp = timestamp
         self.previous_hash = previous_hash
         self.nonce = nonce
@@ -26,6 +28,7 @@ class Blockchain:
     def __init__(self):
         self.unconfirmed_transactions = []
         self.chain = []
+        self.smart_contracts = []
         self.account_block = None
 
     def get_account_wallet_hash(self):
@@ -176,3 +179,9 @@ class Blockchain:
             return True
         return False
     
+    @property
+    def transactions(self):
+        transactions = []
+        for block in self.chain:
+            transactions.extend(block.transactions)
+        return TransactionList(self.get_account_wallet_hash(), transactions)

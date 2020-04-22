@@ -7,11 +7,20 @@
 			<form action="/submit" id="textform" method="post">
 				<div class="form-group">
 					<label>Your name</label>
-					<input type="text" class="form-control" name="author" placeholder="Your name">
+					<input type="text" class="form-control" name="author" placeholder="Your name" required="true">
 				</div>
 				<div class="form-group">
 					<label>Target coount</label>
-					<input type="text" class="form-control" name="target" placeholder="Target coount">
+					<input type="text" class="form-control" name="target" placeholder="Target coount" required="true">
+				</div>
+				<div class="form-group">
+					<label>Transaction type</label>
+					<select class="form-control" name="type">
+						<option value="send_money">Send Money</option>
+						<option value="offer">Offer</option>
+						<option value="verification">Verification</option>
+						<option value="undefined">Undefined</option>
+					</select>
 				</div>
 				<div class="form-group">
 					<label>Money</label>
@@ -19,24 +28,52 @@
 				</div>
 				<div class="form-group">
 					<label>Message</label>
-					<textarea name="content" class="form-control" rows="4" cols="50" placeholder="Just write whatever you want to..."></textarea>
+					<textarea name="content" class="form-control" rows="4" cols="50" placeholder="Just write whatever you want to..." required="true"></textarea>
 				</div>
 				<button type="submit" class="btn btn-primary">Submit</button>
 			</form>
 		</div>
 		<div class="col-8">
-			<h1>Chat</h1>
+			<h1>Transaction log</h1>
 			{% for post in posts %}
 			<div class="post_box">
-				<div class="post_box-header">
-					<div style="background: rgb(0, 97, 146) none repeat scroll 0% 0%; box-shadow: rgb(0, 97, 146) 0px 0px 0px 2px;" class="post_box-avatar">{{post.author[0]}}</div>
-					<div class="name-header">{{post.author}}</div>
-					<div class="post_box-subtitle"> Posted at <i>{{readable_time(post.timestamp)}}</i></div>
-				</div>
-				<div>
-					<div class="post_box-body">
-						<p>{{post.content}}</p>
+				<div class="media">
+					{% if post.from_account != wallet.hash %}
+						{% if post.type == 'send_money' %}
+						<img width="64" src="https://icons.iconarchive.com/icons/cjdowner/cryptocurrency/512/Binance-Coin-icon.png" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+						{% if post.type == 'undefined' %}
+						<img width="64" src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRdXLCKwZXIMhcSZ5w4PSEYASvC0Hfd9tDBh92H3wBA5uKXcPuT&usqp=CAU" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+						{% if post.type == 'offer' %}
+						<img width="64" src="https://us.123rf.com/450wm/alexwhite/alexwhite1609/alexwhite160902387/62387260-best-offer-square-glossy-chrome-silver-metallic-web-icon.jpg?ver=6" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+						{% if post.type == 'verification' %}
+						<img width="64" src="https://getdrawings.com/free-icon/check-mark-icon-png-65.png" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+					{% endif %}
+					<div class="media-body">
+						<div class="post_box-subtitle"> At <i>{{readable_time(post.timestamp)}}</i></div>
+						<h5 class="mt-0">{{post.author}} #{{post.from_account[:18]}}</h5>
+						{% if post.type == 'send_money' %}
+						<h3>${{post.amount}}</h3>
+						{% endif %}
+						{{post.content}}
 					</div>
+					{% if post.from_account == wallet.hash %}
+						{% if post.type == 'send_money' %}
+						<img width="64" src="https://icons.iconarchive.com/icons/cjdowner/cryptocurrency/512/Binance-Coin-icon.png" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+						{% if post.type == 'undefined' %}
+						<img width="64" src="https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRdXLCKwZXIMhcSZ5w4PSEYASvC0Hfd9tDBh92H3wBA5uKXcPuT&usqp=CAU" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+						{% if post.type == 'offer' %}
+						<img width="64" src="https://us.123rf.com/450wm/alexwhite/alexwhite1609/alexwhite160902387/62387260-best-offer-square-glossy-chrome-silver-metallic-web-icon.jpg?ver=6" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+						{% if post.type == 'verification' %}
+						<img width="64" src="https://getdrawings.com/free-icon/check-mark-icon-png-65.png" class="mr-3" alt="{{post.from_account}}">
+						{% endif %}
+					{% endif %}
 				</div>
 			</div>
 			{% endfor %}
