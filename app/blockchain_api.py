@@ -117,7 +117,6 @@ def new_transaction():
 
     return json_text_response("Success", 201)
 
-
 # endpoint to return the node's copy of the chain.
 # Our application will be using this endpoint to query
 # all the posts to display.
@@ -227,6 +226,12 @@ def consensus(blockchain):
         return True
 
     return False
+
+# endpoint to query unconfirmed transactions
+@app.route('/get_offers', method='GET')
+def get_offers():
+    return json.dumps(blockchain.offers())
+
 
 
 def announce_new_block(block):

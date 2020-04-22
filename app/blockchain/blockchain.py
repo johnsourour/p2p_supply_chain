@@ -2,7 +2,9 @@ from hashlib import sha256
 import json
 import time
 
-from .transaction import TransactionList
+from .transaction import TransactionList, OffersList, Transaction
+from .smartContract import SmartContract
+
 
 class Block:
     def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
@@ -29,13 +31,14 @@ class Blockchain:
         self.unconfirmed_transactions = []
         self.chain = []
         self.smart_contracts = []
+        self.purchase_requests = []
+        self.offers = []
         self.account_block = None
 
     def get_account_wallet_hash(self):
         if self.account_block is None:
             self.init_account()
         return self.account_block.hash
-
 
 
     def create_genesis_block(self):
@@ -119,6 +122,59 @@ class Blockchain:
 
         return result
 
+    def handle_smart_contracts(self, transactions):
+        """
+        This function handle current smart contract related transactions and waits to trigger its transaction
+        """
+        new_transactions = []
+        for tx in transactions:
+            if Transaction(tx).get_type() == Transaction.OFFER:
+                new_contract = SmartContract(tx)
+                self.smart_contracts.append(new_contract)
+                ## price from seller HERE and add to new_transactions
+                ## 2*price from buyer HERE and add to new_transactions
+            else:
+                self.purchase_requests.append(tx)
+        tmp_purchase = self.purchase_requests
+        tmp_offers = self.smart_contracts
+        for purchase in self.purchase_requests:
+            product_key_hash = Transaction(purchase).get_content()
+            price = Transaction(purchase).get_amount()
+            for offer in self.smart_contracts:
+                if offer.purchase(price, product_key_hash):
+                    tmp_purchase.remove(purchase)
+                    tmp_offers.remove(offer)
+                    ## 2*price to seller HERE and add to new_transactions
+                    ## price to buyer HERE and add to new_transactions
+                    break
+
+        self.purchase_requests = tmp_purchase
+        self.smart_contracts = tmp_offers
+        return new_transactions
+
+
+
+    def filter_transactions(self, transactions):
+        """
+        This function filters the unconfirmed transaction so that the smart contract related transactions are saved           and not mined, and then handles smart contracts and triggers any of them in case the conditions are met
+        """
+        to_mine = []
+        to_process_smart_contract = []
+        for tx in transactions:
+            current_tx = Transaction(tx)
+            type = current_tx.get_type()
+            if type == Transaction.OFFER or type == Transaction.PURCHASE or type == Transaction.VERIFICATION:
+                to_process_smart_contract.append(tx)
+            else:
+                to_mine.append(tx)
+
+        smart_contracts_processed = self.handle_smart_contracts(to_process_smart_contract)
+        for tx in smart_contracts_processed:
+            to_mine.append(tx)
+
+        return to_mine
+
+
     def mine(self):
         """
         This function serves as an interface to add the pending
@@ -128,11 +184,14 @@ class Blockchain:
         if not self.unconfirmed_transactions:
             return False
 
+        to_mine_transactions = self.filter_transactions(self.unconfirmed_transactions)
         last_block = self.last_block
+
+
 
         # No fee for block generation
         new_block = Block(index=last_block.index + 1,
-                          transactions=self.unconfirmed_transactions,
+                          transactions=to_mine_transactions,
                           timestamp=time.time(),
                           previous_hash=last_block.hash)
 
@@ -176,8 +235,8 @@ class Blockchain:
         proof = self.proof_of_work(new_block)
         if self.add_block(new_block, proof):
             self.smart_contracts.append(new_block)
-            return True
-        return False
+            return new_block
+        return None
     
     @property
     def transactions(self):
@@ -185,3 +244,10 @@ class Blockchain:
         for block in self.chain:
             transactions.extend(block.transactions)
         return TransactionList(self.get_account_wallet_hash(), transactions)
+    #
+    # @property
+    # def offers(self):
+    #     transactions = []
+    #     for block in self.chain:
+    #         transactions.extend(block.transactions)
+    #     return OffersList(self.get_account_wallet_hash(), transactions)

@@ -2,6 +2,7 @@
 class Transaction:
   SEND_MONEY    = 'send_money'
   OFFER         = 'offer'
+  PURCHASE      = 'purchase'
   VERIFICATION  = 'verification'
   UNDEFINED     = 'undefined'
 
@@ -15,6 +16,7 @@ class Transaction:
     """
     return self.data.get('type', Transaction.UNDEFINED)
 
+
   @property
   def from_account(self):
     return self.data.get('from_account', '')
@@ -24,12 +26,20 @@ class Transaction:
     return self.data.get('to_account', '')
 
   @property
+  def get_content(self):
+    return self.data.get('content', '')
+
+  @property
   def amount(self):
     return float(self.data.get('amount', 0)) \
       if self.get_type == 'send_money' else 0.0
 
   def is_linked(self, account_id):
     return self.from_account == account_id or self.to_account == account_id
+
+  def is_offer(self):
+    global OFFER
+    return self.get_type() == OFFER
 
 
 class TransactionList:
@@ -47,3 +57,11 @@ class TransactionList:
       tx = Transaction(_tx)
       amount += -tx.amount if tx.from_account == self.account_id else tx.amount
     return amount
+
+class OffersList:
+  def __init__(self, account_id, transactions):
+    """
+    transactions - the list of transactions as dict
+    """
+    self.transactions = [tx for tx in transactions if Transaction(tx).is_offer()]
+
