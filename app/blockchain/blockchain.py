@@ -9,6 +9,7 @@ class Block:
         self.timestamp = timestamp
         self.previous_hash = previous_hash
         self.nonce = nonce
+        self.smart_contracts = []
 
     def compute_hash(self):
         """
@@ -29,8 +30,10 @@ class Blockchain:
 
     def get_account_wallet_hash(self):
         if self.account_block is None:
-            return None
+            self.init_account()
         return self.account_block.hash
+
+
 
     def create_genesis_block(self):
         """
@@ -154,3 +157,22 @@ class Blockchain:
             self.account_block = new_block
             return True
         return False
+
+    def create_smart_contract(self):
+        """
+        Init new smart contract and register it in the blockchain
+        """
+        last_block = self.last_block
+
+        # No fee for block generation
+        new_block = Block(index=last_block.index + 1,
+                          transactions=[],
+                          timestamp=time.time(),
+                          previous_hash=last_block.hash)
+
+        proof = self.proof_of_work(new_block)
+        if self.add_block(new_block, proof):
+            self.smart_contracts.append(new_block)
+            return True
+        return False
+    

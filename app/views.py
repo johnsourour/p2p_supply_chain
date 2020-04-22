@@ -58,13 +58,13 @@ def submit_textarea():
     """
     post_content = request.form["content"]
     author = request.form["author"]
-    amount = request.form["amount"]
+    type = request.form["type"]
     target = request.form["target"]
 
     post_object = {
         'author':  author,
         'content': post_content,
-        'amount':  amount,
+        'type':  type,
         'from_account': blockchain.get_account_wallet_hash(),
         'to_account': target,
     }

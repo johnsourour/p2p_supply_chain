@@ -96,10 +96,16 @@ def register_service(server_hostname):
 
 # endpoint to submit a new transaction. This will be used by
 # our application to add new data (posts) to the blockchain
+# transaction types: [send_money, offer, verification]
+# send_money: money transaction sent from 'from_account' to 'to_account' addresses
+# offer: a product offered by 'from_account' the content should have
+    # {description, price, deposit, smart contract address}
+# verification: product key (content) sent from buyer 'from_account' to smart contract 'to_account'
+
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
     tx_data = request.get_json()
-    required_fields = ["author", "content", "from_account", "to_account"]
+    required_fields = ["author", "content", "from_account", "to_account", "type"]
 
     for field in required_fields:
         if not tx_data.get(field):
