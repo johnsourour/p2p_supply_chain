@@ -57,11 +57,3 @@ class TransactionList:
       tx = Transaction(_tx)
       amount += -tx.amount if tx.from_account == self.account_id else tx.amount
     return amount
-
-class OffersList:
-  def __init__(self, account_id, transactions):
-    """
-    transactions - the list of transactions as dict
-    """
-    self.transactions = [tx for tx in transactions if Transaction(tx).is_offer()]
-

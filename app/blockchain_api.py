@@ -228,9 +228,9 @@ def consensus(blockchain):
     return False
 
 # endpoint to query unconfirmed transactions
-@app.route('/get_offers', method='GET')
+@app.route('/get_offers', methods=['GET'])
 def get_offers():
-    return json.dumps(blockchain.offers())
+    return json.dumps([x.__dict__ for x in blockchain.offers])
 
 
 

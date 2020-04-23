@@ -1,14 +1,15 @@
 import hashlib
 
 class SmartContract:
-    def __init__(self, data, address):
+    def __init__(self, data):
         self.seller = data["from_account"]
         self.product_key_hash = data["content"]
         self.price = data["amount"]
         self.sold = False ### set to True after purchase
         self.verify = False ### set to True after verification by buyer
         self.valid = True
-        self.address = address
+        self.address = data["to_account"]
+        self.buyer = []
         
     # to decide whether the price being asked for is fair or not, I decided to use the last price and add inflation
     # but also decrease the price by 10% for every year it was in the current owners possession. 
@@ -21,27 +22,34 @@ class SmartContract:
         self.valid = False
         return True
     
-    def purchase(self, price, product_key_hash):
-        if self.sold or not self.valid or self.value!=price:
+    def purchase(self, price, address, buyer):
+        if self.sold or not self.valid or self.value!=price or address!=self.address:
             return False
         self.sold = True ### product has been sold
-        return self.verification(product_key_hash)
+        self.buyer = buyer
+        return True
     
-    def verification(self, product_key_hash):
-        if self.verify or product_key_hash!=self.product_key_hash:
+    def verify(self, product_key_hash, buyer):
+        if self.verify or product_key_hash!=self.product_key_hash or buyer!=self.buye:
             return False
         self.verify = True
         return True
 
+    def get_seller(self):
+        return self.seller
+
+    def get_price(self):
+        return self.price
+
     def get_address(self):
         return self.address
-        
-        '''
-        ### this is code for after integration
-        tx_output = {}
-        tx_output['Product Key'] = product_key_verification
-        tx_output['Seller Address'] = self.seller
-        tx_output['Price'] = self.price
-        tx_output['Time of Purchase'] = time_of_new_purchase
-        return tx_output
-        '''
+
+    def get_buyer(self):
+        return self.buyer
+
+    def is_sold(self):
+        return self.sold
+
+    def is_valid(self):
+        return self.valid
+

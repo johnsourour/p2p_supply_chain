@@ -2,7 +2,7 @@ from hashlib import sha256
 import json
 import time
 
-from .transaction import TransactionList, OffersList, Transaction
+from .transaction import TransactionList, Transaction
 from .smartContract import SmartContract
 
 
@@ -31,8 +31,8 @@ class Blockchain:
         self.unconfirmed_transactions = []
         self.chain = []
         self.smart_contracts = []
-        self.purchase_requests = []
-        self.offers = []
+        self.pending_purchases = []
+        self.pending_verifications = []
         self.account_block = None
 
     def get_account_wallet_hash(self):
@@ -122,34 +122,90 @@ class Blockchain:
 
         return result
 
+    def create_smart_contract_transaction(self, from_account, to_account, amount, isReturn):
+        if isReturn:
+            content = "deposit return"
+        else:
+            content = "deposit withdrawal"
+        return {
+            "from_account" : from_account,
+            "to_account" : to_account,
+            "amount" : amount,
+            "type" : Transaction.SEND_MONEY,
+            "author" :  "Smart Contract",
+            "content" : content,
+            "timestamp" : time.now(),
+        }
+
     def handle_smart_contracts(self, transactions):
         """
         This function handle current smart contract related transactions and waits to trigger its transaction
         """
         new_transactions = []
-        for tx in transactions:
-            if Transaction(tx).get_type() == Transaction.OFFER:
-                new_contract = SmartContract(tx)
-                self.smart_contracts.append(new_contract)
-                ## price from seller HERE and add to new_transactions
-                ## 2*price from buyer HERE and add to new_transactions
-            else:
-                self.purchase_requests.append(tx)
-        tmp_purchase = self.purchase_requests
-        tmp_offers = self.smart_contracts
-        for purchase in self.purchase_requests:
-            product_key_hash = Transaction(purchase).get_content()
-            price = Transaction(purchase).get_amount()
-            for offer in self.smart_contracts:
-                if offer.purchase(price, product_key_hash):
-                    tmp_purchase.remove(purchase)
-                    tmp_offers.remove(offer)
-                    ## 2*price to seller HERE and add to new_transactions
-                    ## price to buyer HERE and add to new_transactions
-                    break
 
-        self.purchase_requests = tmp_purchase
-        self.smart_contracts = tmp_offers
+        # add to pending transactions
+        for tx in transactions:
+            type = Transaction(tx).get_type
+            if  type == Transaction.OFFER:
+                # create smart contract wallet
+                contract_wallet = self.create_smart_contract()
+                tx['to_address'] = contract_wallet
+                # create new possible contract
+                smart_contract = SmartContract(tx)
+                self.smart_contracts.append(smart_contract)
+            elif type == Transaction.PURCHASE:
+                self.pending_purchases.append(tx)
+            else:
+                self.pending_verifications.append(tx)
+
+        # process possible purchase requests
+        tmp_purchase = self.pending_purchases
+        for purchase in self.pending_purchases:
+            price = Transaction(purchase).get_amount
+            wallet_address = Transaction(purchase).to_account
+            purchase_address = Transaction(purchase).from_account
+            for contract in self.smart_contracts:
+                if wallet_address != contract.get_address():
+                    continue
+                # if purchase is successful, withdraw deposits from both parties
+                if contract.purchase(price, wallet_address, purchase_address):
+                    price = contract.get_price()
+                    # price amount from seller
+                    tx_seller = self.create_smart_contract_transaction(contract.get_seller(), contract.get_address(), price)
+                    # 2*price amount from buyer
+                    tx_buyer = self.create_smart_contract_transaction(purchase_address, contract.get_address(), 2*price)
+                    new_transactions.append(tx_buyer)
+                    new_transactions.append(tx_seller)
+                tmp_purchase.remove(purchase)
+                break
+        self.pending_purchases = tmp_purchase
+
+        # process possible verification requests
+        tmp_verifications = self.pending_verifications
+        tmp_contracts = self.smart_contracts
+        for verification in self.pending_verifications:
+            key_hash = Transaction(verification).get_content
+            buyer_address = Transaction(verification).from_account
+            wallet_address = Transaction(verification).to_account
+            for contract in self.smart_contracts:
+                if wallet_address != contract.get_address():
+                    continue
+                # if verification is successful, return deposits to both parties
+                if contract.verify(key_hash, buyer_address):
+                    # 2*price amount to seller
+                    tx_seller = self.create_smart_contract_transaction(contract.get_address(), contract.get_seller(),
+                                                                       2*price)
+                    # price amount to buyer
+                    tx_buyer = self.create_smart_contract_transaction(contract.get_address(), purchase_address,
+                                                                      price)
+                    new_transactions.append(tx_buyer)
+                    new_transactions.append(tx_seller)
+                    tmp_contracts.remove(contract)
+                tmp_verifications.remove(verification)
+                break
+        self.pending_verifications = tmp_verifications
+        self.smart_contracts = tmp_contracts
+
         return new_transactions
 
 
@@ -162,7 +218,7 @@ class Blockchain:
         to_process_smart_contract = []
         for tx in transactions:
             current_tx = Transaction(tx)
-            type = current_tx.get_type()
+            type = current_tx.get_type
             if type == Transaction.OFFER or type == Transaction.PURCHASE or type == Transaction.VERIFICATION:
                 to_process_smart_contract.append(tx)
             else:
@@ -234,7 +290,6 @@ class Blockchain:
 
         proof = self.proof_of_work(new_block)
         if self.add_block(new_block, proof):
-            self.smart_contracts.append(new_block)
             return new_block
         return None
     
@@ -245,9 +300,6 @@ class Blockchain:
             transactions.extend(block.transactions)
         return TransactionList(self.get_account_wallet_hash(), transactions)
     #
-    # @property
-    # def offers(self):
-    #     transactions = []
-    #     for block in self.chain:
-    #         transactions.extend(block.transactions)
-    #     return OffersList(self.get_account_wallet_hash(), transactions)
+    @property
+    def offers(self):
+        return self.smart_contracts
