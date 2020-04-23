@@ -1,4 +1,4 @@
-from flask import render_template, redirect, request, flash
+from flask import render_template, session, redirect, request, flash
 import datetime
 import json
 import requests
@@ -61,6 +61,9 @@ def submit_textarea():
     txtype = request.form["type"]
     amount = request.form["amount"]
     target = request.form["target"]
+
+    session['profile_name'] = author
+    session['profile_target'] = target
 
     post_object = {
         'author':       author,

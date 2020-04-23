@@ -18,19 +18,19 @@
 					<form action="/submit" id="textform" method="post">
 						<div class="form-group">
 							<label>Your name</label>
-							<input type="text" class="form-control" name="author" placeholder="Your name" required="true">
+							<input type="text" class="form-control" name="author" placeholder="Your name" value="{{session['profile_name']}}" required="true">
 						</div>
 						<div class="form-group">
 							<label>Target coount</label>
-							<input type="text" class="form-control" name="target" placeholder="Target coount" required="true">
+							<input type="text" class="form-control" name="target" placeholder="Target coount" required="true" value="{{session['profile_target']}}">
 						</div>
 						<div class="form-group">
 							<label>Transaction type</label>
 							<select class="form-control" name="type">
-								<option value="send_money">Send Money</option>
 								<option value="offer">Offer</option>
 								<option value="verification">Verification</option>
 								<option value="undefined">Undefined</option>
+								<option value="send_money">Send Money</option>
 							</select>
 						</div>
 						<div class="form-group">
@@ -38,8 +38,8 @@
 							<input type="text" class="form-control" name="amount" placeholder="Amount">
 						</div>
 						<div class="form-group">
-							<label>Message</label>
-							<textarea name="content" class="form-control" rows="4" cols="50" placeholder="Just write whatever you want to..." required="true"></textarea>
+							<label>Content</label>
+							<textarea name="content" class="form-control" rows="4" cols="50" placeholder="Just write whatever you want to..."></textarea>
 						</div>
 						<button type="submit" class="btn btn-primary">Submit</button>
 					</form>
@@ -86,6 +86,15 @@
 								{% endif %}
 							{% endif %}
 						</div>
+						<!-- <div class="media">
+							<img width="64" src="https://us.123rf.com/450wm/alexwhite/alexwhite1609/alexwhite160902387/62387260-best-offer-square-glossy-chrome-silver-metallic-web-icon.jpg?ver=6" class="mr-3" alt="{{post.from_account}}">
+							<div class="media-body">
+								<div class="post_box-subtitle"> At <i>123</i></div>
+								<h5 class="mt-0">{12323 111</h5>
+								<h3>$10</h3>
+								Message
+							</div>
+						</div> -->
 					</div>
 					{% endfor %}
 				</div>

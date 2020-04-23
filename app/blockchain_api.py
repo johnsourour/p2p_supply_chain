@@ -7,6 +7,7 @@ import os
 from .blockchain import Blockchain, Block
 from .configs import APPLICATION_PORT, APPLICATION_SERVICES_ANNONCE
 from .application import app
+from .blockchain.transaction import Transaction
 
 # the node's copy of blockchain
 blockchain = Blockchain()
@@ -105,7 +106,10 @@ def register_service(server_hostname):
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
     tx_data = request.get_json()
-    required_fields = ["author", "content", "from_account", "to_account", "type"]
+    required_fields = ["author", "from_account", "to_account", "type"]
+
+    if tx_data.get("type") in [Transaction.PURCHASE, Transaction.OFFER]:
+        required_fields.append("content")
 
     for field in required_fields:
         if not tx_data.get(field):

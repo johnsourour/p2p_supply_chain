@@ -145,15 +145,15 @@ class Blockchain:
 
         # add to pending transactions
         for tx in transactions:
-            type = Transaction(tx).get_type
-            if  type == Transaction.OFFER:
+            txtype = Transaction(tx).get_type
+            if  txtype == Transaction.OFFER:
                 # create smart contract wallet
                 contract_wallet = self.create_smart_contract()
                 tx['to_address'] = contract_wallet
                 # create new possible contract
                 smart_contract = SmartContract(tx)
                 self.smart_contracts.append(smart_contract)
-            elif type == Transaction.PURCHASE:
+            elif txtype == Transaction.PURCHASE:
                 self.pending_purchases.append(tx)
             else:
                 self.pending_verifications.append(tx)
@@ -212,7 +212,8 @@ class Blockchain:
 
     def filter_transactions(self, transactions):
         """
-        This function filters the unconfirmed transaction so that the smart contract related transactions are saved           and not mined, and then handles smart contracts and triggers any of them in case the conditions are met
+        This function filters the unconfirmed transaction so that the smart contract related transactions are saved
+        and not mined, and then handles smart contracts and triggers any of them in case the conditions are met
         """
         to_mine = []
         to_process_smart_contract = []
@@ -242,8 +243,6 @@ class Blockchain:
 
         to_mine_transactions = self.filter_transactions(self.unconfirmed_transactions)
         last_block = self.last_block
-
-
 
         # No fee for block generation
         new_block = Block(index=last_block.index + 1,
