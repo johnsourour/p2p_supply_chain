@@ -1,4 +1,4 @@
-from flask import render_template, redirect, request
+from flask import render_template, redirect, request, flash
 import datetime
 import json
 import requests
@@ -74,9 +74,14 @@ def submit_textarea():
     # Submit a transaction
     new_tx_address = "{}/new_transaction".format(CONNECTED_NODE_ADDRESS)
 
-    requests.post(new_tx_address,
-                  json=post_object,
-                  headers={'Content-type': 'application/json'})
+    try:
+        response = requests.post(new_tx_address,
+                    json=post_object,
+                    headers={'Content-type': 'application/json'})
+        print(">>>", response.text)
+        flash(response.text, 'info')
+    except Exception as e:
+        flash(e, 'error')
 
     return redirect('/')
 
