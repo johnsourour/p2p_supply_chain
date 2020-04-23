@@ -48,6 +48,6 @@ TBA
 
 ## Credits
 
-This project is built on top of [this repo](https://github.com/satwikkansal/python_blockchain_app/tree/ibm_blockchain_postl), credits to the original author 
+This project is built on top of [this repo](https://github.com/satwikkansal/python_blockchain_app/tree/ibm_blockchain_post), credits to the original author 
 
 
