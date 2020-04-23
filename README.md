@@ -1,6 +1,7 @@
 # Peer to Peer Supply Chain Reseller's market
 
-A simple tutorial for developing a blockchain application from scratch in Python.
+This project is about a peer to peer basic application built on top of a blockchain with PoW consensus algorithm. The main actors of the system are buyers and sellers who have their own wallets on the system of products and they can add listings (or offers) for their product and the purchase of the product is handled by a smart contract that guarantees the anonymity and the security of the transactions involved by using the dual-deposit approach.
+
 
 ## Instructions to run
 
