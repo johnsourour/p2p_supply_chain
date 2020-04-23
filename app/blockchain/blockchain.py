@@ -194,10 +194,10 @@ class Blockchain:
                 if contract.verify(key_hash, buyer_address):
                     # 2*price amount to seller
                     tx_seller = self.create_smart_contract_transaction(contract.get_address(), contract.get_seller(),
-                                                                       2*price)
+                                                                       2*price, False)
                     # price amount to buyer
                     tx_buyer = self.create_smart_contract_transaction(contract.get_address(), purchase_address,
-                                                                      price)
+                                                                      price, True)
                     new_transactions.append(tx_buyer)
                     new_transactions.append(tx_seller)
                     tmp_contracts.remove(contract)
