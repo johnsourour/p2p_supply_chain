@@ -40,7 +40,7 @@ $ make run PORT=CUSTOM_PORT
 
 One instance of our blockchain node is now up and running at that port (8000 by defaut) 
 
-## Instructions to run
+## Screenshots
 
 TBA
 
