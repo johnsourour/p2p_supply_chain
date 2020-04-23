@@ -59,19 +59,57 @@
 								{% if post.type == 'offer' %}
 								<img width="64" src="https://us.123rf.com/450wm/alexwhite/alexwhite1609/alexwhite160902387/62387260-best-offer-square-glossy-chrome-silver-metallic-web-icon.jpg?ver=6" class="mr-3" alt="{{post.from_account}}">
 								{% endif %}
+								{% if post.type == 'purchase' %}
+								<img width="64" src="https://www.pinclipart.com/picdir/middle/155-1559554_purchasing-icon-png-clipart.png" class="mr-3" alt="{{post.from_account}}">
+								{% endif %}
 								{% if post.type == 'verification' %}
 								<img width="64" src="https://getdrawings.com/free-icon/check-mark-icon-png-65.png" class="mr-3" alt="{{post.from_account}}">
 								{% endif %}
-							{% endif %}
-							<div class="media-body">
-								<div class="post_box-subtitle"> At <i>{{readable_time(post.timestamp)}}</i></div>
-								<h5 class="mt-0">{{post.author}} #{{post.from_account[:18]}}</h5>
-								{% if post.type == 'send_money' %}
-								<h3>${{post.amount}}</h3>
+								<div class="media">
+								{% if post.type == 'offer' %}
+									<img width="64" src="https://us.123rf.com/450wm/alexwhite/alexwhite1609/alexwhite160902387/62387260-best-offer-square-glossy-chrome-silver-metallic-web-icon.jpg?ver=6" class="mr-3" alt="{{post.from_account}}">
+									<div class="media-body">
+										<form action="/submit" method="post">
+											<div class="post_box-subtitle"> At <i>{{readable_time(post.timestamp)}}</i></div>
+											<h5 class="mt-0">{{post.author}} #{{post.from_account[:18]}}</h5>
+											<h3>${{post.amount}}</h3>
+											<input type="hidden" name="type" value="purchase" />
+											<input type="hidden" name="target" value="{{post.from_account}}" />
+											<button type="submit" class="btn btn-success">Accept</button>
+										</form>
+									</div>
+								{% else %}
+									{% if post.type == 'offer' %}
+									<img width="64" src="https://www.pinclipart.com/picdir/middle/155-1559554_purchasing-icon-png-clipart.png" class="mr-3" alt="{{post.from_account}}">
+									<div class="media-body">
+										<form action="/submit" method="post">
+											<div class="post_box-subtitle"> At <i>{{readable_time(post.timestamp)}}</i></div>
+											<h5 class="mt-0">{{post.author}} #{{post.from_account[:18]}}</h5>
+											<h3>${{post.amount}}</h3>
+											<input type="hidden" name="type" value="purchase" />
+											<input type="hidden" name="target" value="{{post.from_account}}" />
+											<button type="submit" class="btn btn-success">Accept</button>
+										</form>
+									</div>
+									{% else %}
+										<div class="post_box-subtitle"> At <i>{{readable_time(post.timestamp)}}</i></div>
+										<h5 class="mt-0">{{post.author}} #{{post.from_account[:18]}}</h5>
+										{% if post.type == 'send_money' %}
+										<h3>${{post.amount}}</h3>
+										{% endif %}
+									{% endif %}
 								{% endif %}
 								{{post.content}}
-							</div>
-							{% if post.from_account == wallet.hash %}
+								</div>
+							{% else %}
+								<div class="media-body">
+									<div class="post_box-subtitle"> At <i>{{readable_time(post.timestamp)}}</i></div>
+									<h5 class="mt-0">{{post.author}} #{{post.from_account[:18]}}</h5>
+									{% if post.type == 'send_money' %}
+									<h3>${{post.amount}}</h3>
+									{% endif %}
+									{{post.content}}
+								</div>
 								{% if post.type == 'send_money' %}
 								<img width="64" src="https://icons.iconarchive.com/icons/cjdowner/cryptocurrency/512/Binance-Coin-icon.png" class="mr-3" alt="{{post.from_account}}">
 								{% endif %}
@@ -81,20 +119,14 @@
 								{% if post.type == 'offer' %}
 								<img width="64" src="https://us.123rf.com/450wm/alexwhite/alexwhite1609/alexwhite160902387/62387260-best-offer-square-glossy-chrome-silver-metallic-web-icon.jpg?ver=6" class="mr-3" alt="{{post.from_account}}">
 								{% endif %}
+								{% if post.type == 'purchase' %}
+								<img width="64" src="https://www.pinclipart.com/picdir/middle/155-1559554_purchasing-icon-png-clipart.png" class="mr-3" alt="{{post.from_account}}">
+								{% endif %}
 								{% if post.type == 'verification' %}
 								<img width="64" src="https://getdrawings.com/free-icon/check-mark-icon-png-65.png" class="mr-3" alt="{{post.from_account}}">
 								{% endif %}
 							{% endif %}
 						</div>
-						<!-- <div class="media">
-							<img width="64" src="https://us.123rf.com/450wm/alexwhite/alexwhite1609/alexwhite160902387/62387260-best-offer-square-glossy-chrome-silver-metallic-web-icon.jpg?ver=6" class="mr-3" alt="{{post.from_account}}">
-							<div class="media-body">
-								<div class="post_box-subtitle"> At <i>123</i></div>
-								<h5 class="mt-0">{12323 111</h5>
-								<h3>$10</h3>
-								Message
-							</div>
-						</div> -->
 					</div>
 					{% endfor %}
 				</div>
