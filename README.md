@@ -13,7 +13,7 @@ $ git clone https://github.com/satwikkansal/python_blockchain_app.git
 Install the dependencies,
 
 ```sh
-$ cd python_blockchain_app
+$ cd p2p_suuply_chain
 $ pip install -r requirements.txt
 ```
 
