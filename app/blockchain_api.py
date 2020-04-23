@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response, flash
+from flask import Flask, request, jsonify, make_response
 import requests
 import json
 import time
@@ -7,7 +7,6 @@ import os
 from .blockchain import Blockchain, Block
 from .configs import APPLICATION_PORT, APPLICATION_SERVICES_ANNONCE
 from .application import app
-from .blockchain.transaction import Transaction
 
 # the node's copy of blockchain
 blockchain = Blockchain()
@@ -105,19 +104,21 @@ def register_service(server_hostname):
 
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
-    tx_data = request.get_json()
-    required_fields = ["author", "from_account", "to_account", "type"]
 
-    if tx_data.get("type") in [Transaction.PURCHASE, Transaction.OFFER]:
-        required_fields.append("content")
+    tx_data = request.get_json()
+    required_fields = ["author", "content", "from_account", "to_account", "type"]
 
     for field in required_fields:
         if not tx_data.get(field):
             return json_text_response("Invalid transaction data", 404)
+    if not tx_data.get("timestamp"):
+        tx_data["timestamp"] = time.time()
+        announce_new_transaction(tx_data)
 
-    tx_data["timestamp"] = time.time()
+    # smart contract wallet created
+    if blockchain.add_new_transaction(tx_data):
+        commit_blockchain_changes(blockchain)
 
-    blockchain.add_new_transaction(tx_data)
 
     return json_text_response("Success", 201)
 
@@ -249,6 +250,20 @@ def announce_new_block(block):
         headers = {'Content-Type': "application/json"}
         response = requests.post(url,
                       data=json.dumps(block.__dict__, sort_keys=True),
+                      headers=headers)
+        print(url, response)
+
+def announce_new_transaction(tx):
+    """
+    A function to announce to the network once a block has been mined.
+    Other blocks can simply verify the proof of work and add it to their
+    respective chains.
+    """
+    for peer in peers:
+        url = "{}/new_transaction".format(peer)
+        headers = {'Content-Type': "application/json"}
+        response = requests.post(url,
+                      data=json.dumps(tx, sort_keys=True),
                       headers=headers)
         print(url, response)
 

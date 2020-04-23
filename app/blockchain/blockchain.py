@@ -7,7 +7,7 @@ from .smartContract import SmartContract
 
 
 class Block:
-    def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
+    def __init__(self, index, transactions, timestamp   , previous_hash, nonce=0):
         self.index = index
         self.transactions = transactions or []
         self.timestamp = timestamp
@@ -91,7 +91,17 @@ class Blockchain:
         return computed_hash
 
     def add_new_transaction(self, transaction):
-        self.unconfirmed_transactions.append(transaction)
+        if Transaction(transaction).get_type == Transaction.OFFER:
+            # create smart contract wallet
+            contract_wallet = self.create_smart_contract()
+            transaction['to_address'] = contract_wallet
+            # create new possible contract
+            smart_contract = SmartContract(transaction)
+            self.smart_contracts.append(smart_contract)
+            return True
+        else:
+            self.unconfirmed_transactions.append(transaction)
+            return None
 
     @classmethod
     def is_valid_proof(cls, block, block_hash):
@@ -145,15 +155,9 @@ class Blockchain:
 
         # add to pending transactions
         for tx in transactions:
-            txtype = Transaction(tx).get_type
-            if  txtype == Transaction.OFFER:
-                # create smart contract wallet
-                contract_wallet = self.create_smart_contract()
-                tx['to_address'] = contract_wallet
-                # create new possible contract
-                smart_contract = SmartContract(tx)
-                self.smart_contracts.append(smart_contract)
-            elif txtype == Transaction.PURCHASE:
+            type = Transaction(tx).get_type
+
+            if type == Transaction.PURCHASE:
                 self.pending_purchases.append(tx)
             else:
                 self.pending_verifications.append(tx)
@@ -212,8 +216,7 @@ class Blockchain:
 
     def filter_transactions(self, transactions):
         """
-        This function filters the unconfirmed transaction so that the smart contract related transactions are saved
-        and not mined, and then handles smart contracts and triggers any of them in case the conditions are met
+        This function filters the unconfirmed transaction so that the smart contract related transactions are saved           and not mined, and then handles smart contracts and triggers any of them in case the conditions are met
         """
         to_mine = []
         to_process_smart_contract = []
@@ -243,6 +246,8 @@ class Blockchain:
 
         to_mine_transactions = self.filter_transactions(self.unconfirmed_transactions)
         last_block = self.last_block
+
+
 
         # No fee for block generation
         new_block = Block(index=last_block.index + 1,
