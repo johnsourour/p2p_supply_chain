@@ -67,7 +67,7 @@
 									<form action="/submit" method="post">
 										<input type="hidden" name="author" value="Buyer" />
 										<input type="hidden" name="type" value="purchase" />
-										<input type="hidden" name="target" value="{{offer.seller}}" />
+										<input type="hidden" name="target" value="{{offer.address}}" />
 										<input type="hidden" name="amount" value="{{offer.price}}" />
 										<input type="hidden" name="content" value="Buy {{offer.product_key_hash}}" />
 										<button type="submit" class="btn btn-success">Purchase</button>

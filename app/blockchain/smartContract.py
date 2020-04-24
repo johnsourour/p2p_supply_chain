@@ -4,7 +4,7 @@ class SmartContract:
     def __init__(self, data):
         self.seller = data["from_account"]
         self.product_key_hash = data["content"]
-        self.price = data["amount"]
+        self.price = float(data.get("amount", 0.0))
         self.sold = False ### set to True after purchase
         self.verify = False ### set to True after verification by buyer
         self.valid = True
@@ -23,7 +23,7 @@ class SmartContract:
         return True
     
     def purchase(self, price, address, buyer):
-        if self.sold or not self.valid or self.value!=price or address!=self.address:
+        if self.sold or not self.valid or self.price!=price or address!=self.address:
             return False
         self.sold = True ### product has been sold
         self.buyer = buyer

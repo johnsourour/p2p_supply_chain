@@ -133,7 +133,7 @@ class Blockchain:
 
         return result
 
-    def create_smart_contract_transaction(self, from_account, to_account, amount, isReturn):
+    def create_smart_contract_transaction(self, from_account, to_account, amount, isReturn=False):
         if isReturn:
             content = "deposit return"
         else:
@@ -145,7 +145,7 @@ class Blockchain:
             "type" : Transaction.SEND_MONEY,
             "author" :  "Smart Contract",
             "content" : content,
-            "timestamp" : time.now(),
+            "timestamp" : time.time(),
         }
 
     def handle_smart_contracts(self, transactions):
@@ -166,7 +166,7 @@ class Blockchain:
         # process possible purchase requests
         tmp_purchase = self.pending_purchases
         for purchase in self.pending_purchases:
-            price = Transaction(purchase).get_amount
+            price = Transaction(purchase).amount
             wallet_address = Transaction(purchase).to_account
             purchase_address = Transaction(purchase).from_account
             for contract in self.smart_contracts:
