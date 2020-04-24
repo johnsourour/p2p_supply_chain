@@ -7,7 +7,7 @@ from .smartContract import SmartContract
 
 
 class Block:
-    def __init__(self, index, transactions, timestamp   , previous_hash, nonce=0):
+    def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
         self.index = index
         self.transactions = transactions or []
         self.timestamp = timestamp
@@ -34,6 +34,7 @@ class Blockchain:
         self.pending_purchases = []
         self.pending_verifications = []
         self.account_block = None
+
 
     def get_account_wallet_hash(self):
         if self.account_block is None:
@@ -216,7 +217,8 @@ class Blockchain:
 
     def filter_transactions(self, transactions):
         """
-        This function filters the unconfirmed transaction so that the smart contract related transactions are saved           and not mined, and then handles smart contracts and triggers any of them in case the conditions are met
+        This function filters the unconfirmed transaction so that the smart contract related transactions are saved
+        and not mined, and then handles smart contracts and triggers any of them in case the conditions are met
         """
         to_mine = []
         to_process_smart_contract = []
@@ -262,6 +264,7 @@ class Blockchain:
 
         return True
 
+
     def init_account(self):
         """
         Init new user account (wallet) and register it in the blockchain
@@ -280,6 +283,7 @@ class Blockchain:
             return True
         return False
 
+
     def create_smart_contract(self):
         """
         Init new smart contract and register it in the blockchain
@@ -297,13 +301,15 @@ class Blockchain:
             return new_block
         return None
     
+
     @property
     def transactions(self):
         transactions = []
         for block in self.chain:
             transactions.extend(block.transactions)
         return TransactionList(self.get_account_wallet_hash(), transactions)
-    #
+
+
     @property
     def offers(self):
         return self.smart_contracts

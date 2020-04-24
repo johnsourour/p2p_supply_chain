@@ -7,6 +7,9 @@
 			<a class="nav-link active" id="main-tab" data-toggle="tab" href="#main" role="tab" aria-controls="main" aria-selected="true">Main</a>
 		</li>
 		<li class="nav-item">
+			<a class="nav-link" id="transactions-tab" data-toggle="tab" href="#transactions" role="tab" aria-controls="transactions" aria-selected="false">Transactions</a>
+		</li>
+		<li class="nav-item">
 			<a class="nav-link" id="blocks-tab" data-toggle="tab" href="#blocks" role="tab" aria-controls="blocks" aria-selected="false">All Blocks</a>
 		</li>
 	</ul>
@@ -45,6 +48,31 @@
 					</form>
 				</div>
 				<div class="col-8">
+					<h1>Offer list</h1>
+					<table class="table table-hover">
+						<thead class="thead-dark">
+							<tr>
+								<th scope="col">Seller</th>
+								<th scope="col">Product</th>
+								<th scope="col">Price</th>
+							</tr>
+						</thead>
+						<tbody>
+						{% for offer in blockchain.offers %}
+							<tr>
+								<td>{{offer.seller[-18:]}}</td>
+								<td>{{offer.product_key_hash}}</td>
+								<td>${{offer.price}}</td>
+							</tr>
+						{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
+			<div class="row">
+				<div class="col-12">
 					<h1>Transaction log</h1>
 					{% for post in posts %}
 					<div class="post_box">
