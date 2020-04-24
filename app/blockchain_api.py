@@ -4,6 +4,7 @@ import json
 import time
 import os
 
+from app.blockchain.transaction import Transaction
 from .blockchain import Blockchain, Block
 from .configs import APPLICATION_PORT, APPLICATION_SERVICES_ANNONCE
 from .application import app
@@ -23,17 +24,21 @@ def json_text_response(text, status=200):
     return jsonify({"response": text})
 
 
-def commit_blockchain_changes(blockchain):
+def commit_blockchain_changes(bc):
     """
     After adding of the new block we have to share
     the information with the all nodes in the network
     """
     # Making sure we have the longest chain before announcing to the network
-    chain_length = len(blockchain.chain)
-    consensus(blockchain)
-    if chain_length == len(blockchain.chain):
+    chain_length = len(bc.chain)
+    consensus(bc)
+    if chain_length == len(bc.chain):
         # announce the recently mined block to the network
-        announce_new_block(blockchain.last_block)
+        print("debug:", len(bc.chain))
+        announce_new_block(bc.last_block)
+        return True
+    else:
+        return False
 
 
 def create_chain_from_dump(chain_dump):
@@ -106,14 +111,15 @@ def register_service(server_hostname):
 def new_transaction():
 
     tx_data = request.get_json()
-    required_fields = ["author", "content", "from_account", "to_account", "type"]
+    required_fields = ["author", "from_account", "to_account", "type"]
 
     for field in required_fields:
         if not tx_data.get(field):
             return json_text_response("Invalid transaction data", 404)
     if not tx_data.get("timestamp"):
         tx_data["timestamp"] = time.time()
-        announce_new_transaction(tx_data)
+        if not (tx_data.get("type") == Transaction.SEND_MONEY):
+            announce_new_transaction(tx_data)
 
     # smart contract wallet created
     if blockchain.add_new_transaction(tx_data):
@@ -124,7 +130,8 @@ def new_transaction():
 
 # endpoint to return the node's copy of the chain.
 # Our application will be using this endpoint to query
-# all the posts to display.
+# all the posts to dis
+# play.
 @app.route('/chain', methods=['GET'])
 def get_chain():
     chain_data = []
@@ -245,6 +252,7 @@ def announce_new_block(block):
     Other blocks can simply verify the proof of work and add it to their
     respective chains.
     """
+    print("debug: announcing block to", len(peers), "peers")
     for peer in peers:
         url = "{}/add_block".format(peer)
         headers = {'Content-Type': "application/json"}

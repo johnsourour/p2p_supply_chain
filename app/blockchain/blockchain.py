@@ -165,7 +165,7 @@ class Blockchain:
         # process possible purchase requests
         tmp_purchase = self.pending_purchases
         for purchase in self.pending_purchases:
-            price = Transaction(purchase).get_amount
+            price = Transaction(purchase).amount
             wallet_address = Transaction(purchase).to_account
             purchase_address = Transaction(purchase).from_account
             for contract in self.smart_contracts:
